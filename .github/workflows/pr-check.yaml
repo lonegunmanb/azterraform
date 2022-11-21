@@ -9,9 +9,7 @@ on:
 
 jobs:
   prepr-check:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
+    runs-on: [self-hosted, 1ES.Pool=azure-terraform-doc]
     steps:
       - name: checkout
         uses: actions/checkout@v3
