@@ -1,0 +1,28 @@
+name: Weekly E2E Test Check
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  e2e-check:
+    runs-on: [self-hosted, 1ES.Pool=terraform-azurerm-doc]
+    environment:
+      name: crontests
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: test all examples
+        run: |
+          az login --identity --username $MSI_ID > /dev/null
+          export ARM_SUBSCRIPTION_ID=$(az login --identity --username $MSI_ID | jq -r '.[0] | .id')
+          export ARM_TENANT_ID=$(az login --identity --username $MSI_ID | jq -r '.[0] | .tenantId')
+          docker run --rm -v $(pwd):/src -w /src/test --network=host -e MSI_ID -e ARM_SUBSCRIPTION_ID -e ARM_TENANT_ID -e ARM_USE_MSI=true -e CHANGED_FOLDERS mcr.microsoft.com/azterraform sh -c "go mod tidy && go test -timeout=1440m -v ./e2e"
+      - name: Update
+        run: |
+          sh scripts/update-test-record.sh
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'Update TestRecord'
+          branch: ${{ env.default_branch }}
