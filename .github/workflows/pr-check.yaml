@@ -1,0 +1,33 @@
+name: Pre Pull Request Check
+on:
+  pull_request:
+    types: [ 'opened', 'synchronize' ]
+    paths:
+      - '.github/**'
+      - '.github/workflows/**'
+      - 'quickstart/**'
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  prepr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - uses: 8BitJonny/gh-get-current-pr@2.1.0
+        id: PR
+      - uses: Stockopedia/action-get-changed-files@v1
+        id: get_changed
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ignore: "!quickstart/**"
+          foldersOnly: true
+          format: csv
+      - name: pr-check
+        run: |
+          export CHANGED_FOLDERS="${{ steps.get_changed.outputs.changed }}"
+          if [ -z "${{steps.PR.outputs.number}}" ]; then
+            CHANGED_FOLDERS=$(find ./quickstart -maxdepth 1 -mindepth 1 -type d | tr '\n' ',')
+          fi
+          docker run --rm -v $(pwd):/src -w /src -e CHANGED_FOLDERS mcr.microsoft.com/azterraform:latest make pr-check
