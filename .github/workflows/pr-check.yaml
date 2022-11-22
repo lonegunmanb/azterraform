@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - uses: 8BitJonny/gh-get-current-pr@2.1.0
-        id: PR
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v34
@@ -27,7 +25,7 @@ jobs:
       - name: pr-check
         run: |
           export CHANGED_FOLDERS="${{ steps.changed-files.outputs.all_changed_files }}"
-          if [ -z "${{steps.PR.outputs.number}}" ]; then
+          if [ -z "${{ github.event.number }}" ]; then
             CHANGED_FOLDERS=$(find ./quickstart -maxdepth 1 -mindepth 1 -type d | tr '\n' ',')
           fi
           docker run --rm -v $(pwd):/src -w /src -e CHANGED_FOLDERS mcr.microsoft.com/azterraform:latest make pr-check
