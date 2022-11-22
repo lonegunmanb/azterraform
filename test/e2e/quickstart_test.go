@@ -12,7 +12,7 @@ import (
 func Test_ChangedQuickstarts(t *testing.T) {
 	input := os.Getenv("CHANGED_FOLDERS")
 	folders := strings.Split(input, ",")
-	if input == "all" {
+	if input == "" {
 		var err error
 		folders, err = allExamples()
 		if err != nil {
