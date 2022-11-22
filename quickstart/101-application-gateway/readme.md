@@ -2,7 +2,7 @@
 
 This template deploys an [Azure Application Gateway](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/application_gateway) v2 and two Windows Server 2019 Datacenter test servers for the backend pool.
 
-## Resources
+## Resources 
 
 | Terraform Resource Type | Description |
 | - | - |
