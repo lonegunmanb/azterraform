@@ -2,11 +2,13 @@ package e2e
 
 import (
 	"fmt"
-	helper "github.com/Azure/terraform-module-test-helper"
-	"github.com/gruntwork-io/terratest/modules/terraform"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	helper "github.com/Azure/terraform-module-test-helper"
+	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
 func Test_ChangedQuickstarts(t *testing.T) {
@@ -22,11 +24,15 @@ func Test_ChangedQuickstarts(t *testing.T) {
 	for _, f := range folders {
 		f = strings.TrimSpace(f)
 		t.Run(f, func(t *testing.T) {
-			helper.RunE2ETest(t, fmt.Sprintf("../../%s", f), "", terraform.Options{
+			path := fmt.Sprintf("../../%s", f)
+			defer func() {
+				if !t.Failed() {
+					_ = helper.RecordVersionSnapshot(t, filepath.Join("..", ".."), f)
+				}
+			}()
+			helper.RunE2ETest(t, path, "", terraform.Options{
 				Upgrade: true,
-			}, func(t *testing.T, output helper.TerraformOutput) {
-
-			})
+			}, nil)
 		})
 	}
 }
