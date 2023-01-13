@@ -26,14 +26,15 @@ func Test_Quickstarts(t *testing.T) {
 		if filepath.Dir(f) != "quickstart" {
 			continue
 		}
-		if !files.IsExistingDir(filepath.Join("..", "..", f)) {
+		path := filepath.Join("..", "..", f)
+		if !files.IsExistingDir(path) {
 			continue
 		}
 		t.Run(f, func(t *testing.T) {
 			defer func() {
 				recordTestVersionSnapshot(t, f)
 			}()
-			helper.RunE2ETest(t, f, "", terraform.Options{
+			helper.RunE2ETest(t, path, "", terraform.Options{
 				Upgrade: true,
 			}, nil)
 		})
