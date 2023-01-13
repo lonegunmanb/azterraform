@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"fmt"
+	"github.com/gruntwork-io/terratest/modules/files"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,7 +11,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
-func Test_ChangedQuickstarts(t *testing.T) {
+func Test_Quickstarts(t *testing.T) {
 	input := os.Getenv("CHANGED_FOLDERS")
 	folders := strings.Split(input, ",")
 	if input == "" {
@@ -23,17 +23,50 @@ func Test_ChangedQuickstarts(t *testing.T) {
 	}
 	for _, f := range folders {
 		f = strings.TrimSpace(f)
+		if filepath.Dir(f) != "quickstart" {
+			continue
+		}
+		if !files.IsExistingDir(filepath.Join("..", "..", f)) {
+			continue
+		}
 		t.Run(f, func(t *testing.T) {
-			path := fmt.Sprintf("../../%s", f)
 			defer func() {
-				if !t.Failed() {
-					_ = helper.RecordVersionSnapshot(t, filepath.Join("..", ".."), f)
-				}
+				recordTestVersionSnapshot(t, f)
 			}()
-			helper.RunE2ETest(t, path, "", terraform.Options{
+			helper.RunE2ETest(t, f, "", terraform.Options{
 				Upgrade: true,
 			}, nil)
 		})
+	}
+}
+
+func recordTestVersionSnapshot(t *testing.T, f string) {
+	if t.Failed() {
+		return
+	}
+	err := helper.RecordVersionSnapshot(t, filepath.Join("..", ".."), f)
+	if err != nil {
+		t.Fatalf("Error when generate test version snapshot for %s: %s", f, err.Error())
+	}
+	_, f = filepath.Split(f)
+	dstFolder := filepath.Clean(filepath.Join("..", "..", "TestRecord", f))
+	if !files.IsExistingDir(dstFolder) {
+		err = os.MkdirAll(dstFolder, os.ModeDir)
+		if err != nil {
+			t.Fatalf("Error when make dir for test version snapshot for %s: %s", f, err.Error())
+		}
+	}
+
+	dst := filepath.Clean(filepath.Join(dstFolder, "TestRecord.md.tmp"))
+	if files.FileExists(dst) {
+		err := os.Remove(dst)
+		if err != nil {
+			t.Fatalf("Error when delete existing test version snapshot %s: %s", dst, err.Error())
+		}
+	}
+	err = files.CopyFile(filepath.Clean(filepath.Join("..", "..", "quickstart", f, "TestRecord.md.tmp")), dst)
+	if err != nil {
+		t.Fatalf("Error when copy test version snapshot for %s: %s", f, err.Error())
 	}
 }
 
@@ -47,7 +80,7 @@ func allExamples() ([]string, error) {
 		if !f.IsDir() {
 			continue
 		}
-		r = append(r, f.Name())
+		r = append(r, filepath.Join("quickstart", f.Name()))
 	}
 	return r, nil
 }
