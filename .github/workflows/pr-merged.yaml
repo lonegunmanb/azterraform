@@ -14,6 +14,8 @@ jobs:
         run: |
           branch=$(curl -s "https://api.github.com/repos/$GITHUB_REPOSITORY" | jq -r '.default_branch')
           echo "default_branch=$branch" >> $GITHUB_ENV
+      - name: checkout
+        uses: actions/checkout@v3
       - uses: 8BitJonny/gh-get-current-pr@2.1.0
         id: PR
       - name: Download artifact
