@@ -7,10 +7,6 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.default.kube_config.0.cluster_ca_certificate)
 }
 
-provider "azurerm" {
-  features {}
-}
-
 # Create a service account for the Helm Tiller
 resource "kubernetes_service_account" "tiller" {
   metadata {
