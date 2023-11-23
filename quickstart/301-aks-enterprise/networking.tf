@@ -45,6 +45,17 @@ resource "azurerm_network_security_group" "gateway" {
   name                = "${var.name}-gateway-nsg"
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
+  security_rule {
+    name = "allow-appgw"
+    priority = 100
+    direction = "Inbound"
+    access = "Allow"
+    protocol = "*"
+    source_port_range = "*"
+    source_address_prefix = "*"
+    destination_port_range = "65200-65535"
+    destination_address_prefix = "*"
+  }
 }
 
 # Network security group associations
@@ -69,9 +80,15 @@ resource "random_string" "gw_prefix_name" {
   numeric = false
 }
 
+resource "random_string" "gw_name_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
 locals {
 
-  gateway_name                   = "${var.dns_prefix}-${var.name}-${var.environment}-gateway"
+  gateway_name                   = "${var.dns_prefix}-${var.name}-${var.environment}-gateway-${random_string.gw_name_suffix.result}"
   gateway_ip_name                = "${random_string.gw_prefix_name.result}-gw-ip"
   gateway_ip_config_name         = "${var.name}-gateway-ipconfig"
   frontend_port_name             = "${var.name}-gateway-feport"
@@ -158,6 +175,7 @@ resource "azurerm_application_gateway" "gateway" {
   }
 
   request_routing_rule {
+    priority           = 1
     name               = "${local.request_routing_rule_name}-http"
     rule_type          = "PathBasedRouting"
     http_listener_name = "${local.listener_name}-http"
@@ -177,5 +195,10 @@ resource "azurerm_application_gateway" "gateway" {
         "/*"
       ]
     }
+  }
+  waf_configuration {
+    enabled       = false
+    firewall_mode = "Detection"
+    rule_set_version = "3.2"
   }
 }

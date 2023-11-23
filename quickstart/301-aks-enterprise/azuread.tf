@@ -1,3 +1,5 @@
+provider "azuread" {}
+
 resource "azuread_application" "default" {
   display_name = "${var.name}-${var.environment}"
 }
